@@ -1,116 +1,141 @@
-//自定义库
-//#include "reader.h"
-#include "transfer.h"
-#include "shower.h"
-#include "vtkSliceViewer.h"
-//#include "vtkVolumeViewer.h"
-/*
-#include "dialog.h"
-#include "mainwindow.h"
-*/
+﻿// VTK: Spiral with vtkTubeFilter
+// Varying tube radius and independent RGB colors with an unsignedCharArray
+// Contributed by Marcus Thamson
 
-//系统库
-#include <iostream>
+#include <vtkPolyData.h>
+#include <vtkPoints.h>
+#include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkPolyData.h>
+#include <vtkPointData.h>
 
-//VTK库
-#include "vtkPointPickCallback.h"
-#include "vtkInteractorStyleTrackballCamera.h"
-//#include "itkImageRegionConstIterator.h"
-#include "vtkImageActor.h"
-#include "vtkInteractorStyleImage.h"
-#include "vtkAxesActor.h"
-#include "vtkJPEGReader.h"
+#include <vtkCell.h>
+#include <vtkCellData.h>
+#include <vtkDataSet.h>
+#include <vtkDataSetAttributes.h>
+#include <vtkProperty.h>
+#include <vtkSmartPointer.h>
+#include <vtkTubeFilter.h>
 
-//OpenCV库
-#include "opencv2/opencv.hpp"
+#include <vtkDataSetMapper.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkCamera.h>
+#include <vtkInteractorStyleTrackballCamera.h>
 
-/*
-//Qt库
-#include <QApplication>
-#include <QDialog>
-#include <QtWidgets>
-*/
+#include <vtkMath.h>
 
-using namespace cv;
-
-
-void GetImageInfo(vtkImageData* img)
+int main(int, char *[])
 {
-    std::cout << std::endl; 
-    std::cout << "/************VTK Image Info***********/" << std::endl;
-    std::cout << "origin:" << img->GetOrigin()[0] << "," << img->GetOrigin()[1] << "," << img->GetOrigin()[2] << std::endl;
-    std::cout << "space:" << img->GetSpacing()[0] << "," << img->GetSpacing()[1] << "," << img->GetSpacing()[2] << std::endl;
-    std::cout << "extent start:" << img->GetExtent()[0] << "," << img->GetExtent()[2] << "," << img->GetExtent()[4] << std::endl;
-    std::cout << "extent end:" << img->GetExtent()[1] << "," << img->GetExtent()[3] << "," << img->GetExtent()[5] << std::endl;
-    std::cout << std::endl;
+	// Spiral tube
+	double vX, vY, vZ;
+	unsigned int nV = 256;      // No. of vertices
+	unsigned int nCyc = 5;      // No. of spiral cycles
+	double rT1 = 0.1, rT2 = 0.5;// Start/end tube radii
+	double rS = 2;              // Spiral radius
+	double h = 10;              // Height
+	unsigned int nTv = 8;       // No. of surface elements for each tube vertex
+
+	unsigned int i;
+
+	// Create points and cells for the spiral
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	for (i = 0; i < nV; i++)
+	{
+		// Spiral coordinates
+		vX = rS * cos(2 * vtkMath::Pi() * nCyc * i / (nV - 1));
+		vY = rS * sin(2 * vtkMath::Pi() * nCyc * i / (nV - 1));
+		vZ = h * i / nV;
+		points->InsertPoint(i, vX, vY, vZ);
+	}
+
+	vtkSmartPointer<vtkCellArray> lines =
+		vtkSmartPointer<vtkCellArray>::New();
+	lines->InsertNextCell(nV);
+	for (i = 0; i < nV; i++)
+	{
+		lines->InsertCellPoint(i);
+	}
+
+	vtkSmartPointer<vtkPolyData> polyData =
+		vtkSmartPointer<vtkPolyData>::New();
+	polyData->SetPoints(points);
+	polyData->SetLines(lines);
+
+	// Varying tube radius using sine-function
+	vtkSmartPointer<vtkDoubleArray> tubeRadius =
+		vtkSmartPointer<vtkDoubleArray>::New();
+	tubeRadius->SetName("TubeRadius");
+	tubeRadius->SetNumberOfTuples(nV);
+	for (i = 0; i < nV; i++)
+	{
+		tubeRadius->SetTuple1(i,
+			rT1 + (rT2 - rT1) * sin(vtkMath::Pi() * i / (nV - 1)));
+	}
+	polyData->GetPointData()->AddArray(tubeRadius);
+	polyData->GetPointData()->SetActiveScalars("TubeRadius");
+
+	// RBG array (could add Alpha channel too I guess...)
+	// Varying from blue to red
+	vtkSmartPointer<vtkUnsignedCharArray> colors =
+		vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colors->SetName("Colors");
+	colors->SetNumberOfComponents(3);
+	colors->SetNumberOfTuples(nV);
+	for (i = 0; i < nV; i++)
+	{
+		colors->InsertTuple3(i,
+			int(255 * i / (nV - 1)),
+			0,
+			int(255 * (nV - 1 - i) / (nV - 1)));
+	}
+	polyData->GetPointData()->AddArray(colors);
+
+	vtkSmartPointer<vtkTubeFilter> tube
+		= vtkSmartPointer<vtkTubeFilter>::New();
+	tube->SetInputData(polyData);
+	tube->SetNumberOfSides(nTv);
+	tube->SetVaryRadiusToVaryRadiusByAbsoluteScalar();
+
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputConnection(tube->GetOutputPort());
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUsePointFieldData();
+	mapper->SelectColorArray("Colors");
+
+	vtkSmartPointer<vtkActor> actor =
+		vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+
+	vtkSmartPointer<vtkRenderer> renderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	renderer->AddActor(actor);
+	renderer->SetBackground(.2, .3, .4);
+
+	// Make an oblique view
+	renderer->GetActiveCamera()->Azimuth(30);
+	renderer->GetActiveCamera()->Elevation(30);
+	renderer->ResetCamera();
+
+	vtkSmartPointer<vtkRenderWindow> renWin =
+		vtkSmartPointer<vtkRenderWindow>::New();
+	vtkSmartPointer<vtkRenderWindowInteractor>
+		iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+
+	iren->SetRenderWindow(renWin);
+	renWin->AddRenderer(renderer);
+	renWin->SetSize(500, 500);
+	renWin->Render();
+
+	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+	iren->SetInteractorStyle(style);
+
+	iren->Start();
+
+	return EXIT_SUCCESS;
 }
-
-int main(int argc,char** argv)
-{
-    char path1[] = "./images/035_0000.jpg";
-    char path2[] = "./images/035_0005.jpg";
-
-    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
-    axes->SetPosition(0,0,0);
-    axes->SetTotalLength(300,300,300);
-    axes->SetAxisLabels(0);
-
-    // vtkSmartPointer<vtkJPEGReader> reader1 = vtkSmartPointer<vtkJPEGReader>::New();
-    // reader1->SetFileName(path1);
-    // reader1->Update();
-
-    //第一幅图片
-    Mat img1= imread(path1);
-    vtkSmartPointer<vtkImageData> vtk_img1;
-    vtk_img1=convertCVMatToVtkImageData(img1,true);
-    GetImageInfo(vtk_img1);
-
-    vtkSmartPointer<vtkImageActor> actor1 = vtkSmartPointer<vtkImageActor>::New();
-    actor1->SetInputData(vtk_img1);
-    vtkSmartPointer<vtkRenderer> renderer1 = vtkSmartPointer<vtkRenderer>::New();
-    renderer1->AddActor(actor1);
-    renderer1->AddActor(axes);
-    renderer1->SetViewport(0.0,0.0,0.5,1.0);
-
-    //第二幅图片
-    Mat img2 = imread(path2);
-    vtkSmartPointer<vtkImageData> vtk_img2;
-    vtk_img2=convertCVMatToVtkImageData(img2,true);
-    GetImageInfo(vtk_img2);
-
-    vtkSmartPointer<vtkImageActor> actor2 = vtkSmartPointer<vtkImageActor>::New();
-    actor2->SetInputData(vtk_img2);
-    vtkSmartPointer<vtkRenderer> renderer2 = vtkSmartPointer<vtkRenderer>::New();
-    renderer2->AddActor(actor2);
-    renderer2->AddActor(axes);
-    renderer2->SetViewport(0.5,0.0,1.0,1.0);
-
-    //显示及交互
-    vtkSmartPointer<vtkRenderWindow> window = vtkSmartPointer<vtkRenderWindow>::New();
-    window->AddRenderer(renderer1);
-    window->AddRenderer(renderer2);
-
-    vtkSmartPointer<vtkInteractorStyleImage> style = vtkSmartPointer<vtkInteractorStyleImage>::New();
-
-    vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    interactor->SetRenderWindow(window);
-    interactor->SetInteractorStyle(style);
-
-    vtkSmartPointer<vtkPointPickCallback> observer = vtkSmartPointer<vtkPointPickCallback>::New();
-    observer->SetSourceImages(img1,img2);
-    observer->SetVTKActors(actor1,actor2);
-    observer->SetRenderers(renderer1,renderer2);
-    observer->SetInteractor(interactor);
-    
-    interactor->AddObserver(vtkCommand::LeftButtonPressEvent, observer);
-
-
-
-    interactor->Initialize();
-    interactor->Start();
-
-
-    return 0;
-}
-
-
