@@ -1,4 +1,4 @@
-#ifndef TRANSFER_H
+﻿#ifndef TRANSFER_H
 #define TRANSDER_H
 
 #include <reader.h>

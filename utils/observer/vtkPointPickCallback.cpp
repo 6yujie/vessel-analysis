@@ -1,4 +1,4 @@
-#include "vtkPointPickCallback.h"
+﻿#include "vtkPointPickCallback.h"
 #include "transfer.h"
 
 double* world_position_render1;  // 这是用来保存坐标的全局变量
@@ -45,7 +45,7 @@ void vtkPointPickCallback::Execute(vtkObject* caller, unsigned long event, void*
     }
 
     
-    if ((i==4)and(j==4))  //人工确定需要区域生长的起始点和终点，总共两张图个两个坐标共四个值
+    if ((i==4) && (j==4))  //人工确定需要区域生长的起始点和终点，总共两张图个两个坐标共四个值
     {
         uchar threshhold[2] = { 0, 210 };
         std::cout << "pos render1: " << "(" << img_pos_render1[0] << " ," << img_pos_render1[1] << "), " << "(" << img_pos_render1[2] << " ," << img_pos_render1[3] << ")" <<std::endl;
@@ -124,13 +124,13 @@ cv::Mat RegionGrow(cv::Mat img, double img_pos_render[4], uchar SeedThreshold[2]
             if (waitSeed_value == 255)
             {   
                 //使用设定的阈值的上限和起点终点的均值再做均值，从而作为上限
-                if ( (SeedThreshold[0] <= opp_waitSeed_value) and (opp_waitSeed_value <= int((float(SeedThreshold[1]) + threshould)) / 2.0) ) //生长条件，小于一定的阈值就放进来
+                if ( (SeedThreshold[0] <= opp_waitSeed_value) && (opp_waitSeed_value <= int((float(SeedThreshold[1]) + threshould)) / 2.0) ) //生长条件，小于一定的阈值就放进来
                 {
                     growArea.at<uchar>(cv::Point(waitSeed.x, waitSeed.y)) = opp_waitSeed_value;
                     //std::cout << "value:" << opp_waitSeed_value << endl;
                     SeedVector.push_back(waitSeed);  //放入新的种子点
                     // 如果取值到了终点，那就停止
-                    if ((waitSeed.x == end_seed.x) and (waitSeed.y == end_seed.y))
+                    if ((waitSeed.x == end_seed.x) && (waitSeed.y == end_seed.y))
                         return growArea;   
                 }
             }

@@ -1,4 +1,4 @@
-#ifndef LION_READER_H
+﻿#ifndef LION_READER_H
 #define LION_READER_H
 
 

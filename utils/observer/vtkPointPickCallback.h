@@ -1,4 +1,4 @@
-#include "vtkCommand.h"
+ï»¿#include "vtkCommand.h"
 #include "vtkImageData.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkRenderWindow.h"
@@ -52,7 +52,7 @@ class vtkPointPickCallback : public vtkCommand
 };
 
 extern double* world_position;
-extern double* world_position_render1;  // ÕâÊÇÓÃÀ´±£´æ×ø±êµÄÈ«¾Ö±äÁ¿
+extern double* world_position_render1;  // è¿™æ˜¯ç”¨æ¥ä¿å­˜åæ ‡çš„å…¨å±€å˜é‡
 extern double* world_position_render2;
 extern double img_pos_render1[4];
 extern double img_pos_render2[4];
