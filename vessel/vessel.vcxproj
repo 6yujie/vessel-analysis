@@ -56,7 +56,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <IncludePath>C:\Program Files %28x86%29\ITK\include\ITK-5.2;C:\opencv\build\include;$(SolutionDir)Vtk-8.2.0\include\vtk-8.2;$(SolutionDir)gui;$(SolutionDir)utils\display;$(SolutionDir)utils\IO;$(SolutionDir)utils\observer;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\ITK\lib;C:\opencv\build\x64\vc15\lib;$(SolutionDir)Vtk-8.2.0\lib;C:\Program Files (x86)\Windows Kits\8.1\Lib\winv6.3\um\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Program Files %28x86%29\ITK\lib;C:\opencv\build\x64\vc15\lib;$(SolutionDir)Vtk-8.2.0\lib;C:\Program Files (x86)\Windows Kits\8.1\Lib\winv6.3\um\x64;C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
@@ -92,8 +92,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\glwidget.cpp" />
     <ClCompile Include="..\gui\dialog.cpp" />
-    <ClCompile Include="..\gui\mainwindow.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\utils\display\shower.cpp" />
     <ClCompile Include="..\utils\display\vtkSliceViewer.cpp" />
@@ -105,6 +105,7 @@
     <ClCompile Include="..\vtkManual3DReconstruction.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="..\glwidget.h" />
     <ClInclude Include="..\utils\display\shower.h" />
     <ClInclude Include="..\utils\display\vtkSliceViewer.h" />
     <ClInclude Include="..\utils\display\vtkViewer.h" />
@@ -112,13 +113,11 @@
     <ClInclude Include="..\utils\IO\reader.h" />
     <ClInclude Include="..\utils\IO\transfer.h" />
     <ClInclude Include="..\utils\observer\vtkPointPickCallback.h" />
-    <QtMoc Include="..\gui\mainwindow.h" />
     <QtMoc Include="..\gui\dialog.h" />
     <ClInclude Include="..\vtkManual3DReconstruction.h" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\gui\dialog.ui" />
-    <QtUic Include="..\gui\mainwindow.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

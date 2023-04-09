@@ -17,6 +17,8 @@
 #include <vtkSmartPointer.h>
 #include <vtkTubeFilter.h>
 
+#include <vtkPolyDataNormals.h>
+
 #include <vtkDataSetMapper.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
@@ -28,12 +30,23 @@
 
 #include <vtkMath.h>
 
-int main(int, char *[])
+#include <QApplication>
+#include <QMainWindow>
+#include <QSurfaceFormat>
+#include <QVector3D>
+#include <QVector>
+#include <QDebug>
+
+#include "glwidget.h"
+
+int main(int argc, char **argv)
 {
 	// Spiral tube
 	double vX, vY, vZ;
-	unsigned int nV = 256;      // No. of vertices
-	unsigned int nCyc = 5;      // No. of spiral cycles
+// 	unsigned int nV = 256;      // No. of vertices
+	unsigned int nV = 50;      // No. of vertices
+// 	unsigned int nCyc = 5;      // No. of spiral cycles
+	unsigned int nCyc = 1;      // No. of spiral cycles
 	double rT1 = 0.1, rT2 = 0.5;// Start/end tube radii
 	double rS = 2;              // Spiral radius
 	double h = 10;              // Height
@@ -52,6 +65,7 @@ int main(int, char *[])
 		points->InsertPoint(i, vX, vY, vZ);
 	}
 
+	// Cell: 单元，一系列有序的点按照指定类型连接所定义的结构
 	vtkSmartPointer<vtkCellArray> lines =
 		vtkSmartPointer<vtkCellArray>::New();
 	lines->InsertNextCell(nV);
@@ -60,6 +74,7 @@ int main(int, char *[])
 		lines->InsertCellPoint(i);
 	}
 
+	// vtkPolyData 表示由顶点、线、多边形和/或三角形组成的几何结构
 	vtkSmartPointer<vtkPolyData> polyData =
 		vtkSmartPointer<vtkPolyData>::New();
 	polyData->SetPoints(points);
@@ -99,6 +114,7 @@ int main(int, char *[])
 	tube->SetInputData(polyData);
 	tube->SetNumberOfSides(nTv);
 	tube->SetVaryRadiusToVaryRadiusByAbsoluteScalar();
+	tube->Update();
 
 	vtkSmartPointer<vtkPolyDataMapper> mapper =
 		vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -106,6 +122,40 @@ int main(int, char *[])
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarModeToUsePointFieldData();
 	mapper->SelectColorArray("Colors");
+
+// 	vtkPolyDataNormals *normals = vtkPolyDataNormals::New();
+	vtkPolyData* tbData = tube->GetOutput();
+
+	vtkPoints *tbPoints = tbData->GetPoints();
+	vtkDataArray* vertexes = tbPoints->GetData();
+	vtkDataArray* normals = tbData->GetPointData()->GetNormals();
+
+	auto vertexLen = vertexes->GetNumberOfValues();
+	auto normalLen = normals->GetNumberOfValues();
+	QVector<QVector3D> m_vertices;
+	QVector<QVector3D> m_normals;
+
+	if (vertexLen == normalLen)
+	{
+		for (int i = 0; i < vertexLen; i++)
+		{
+			float vx = vertexes->GetComponent(i, 0);
+			float vy = vertexes->GetComponent(i, 1);
+			float vz = vertexes->GetComponent(i, 2);
+			m_vertices << QVector3D(vx, vy, vz);
+
+			float nx = normals->GetComponent(i, 0);
+			float ny = normals->GetComponent(i, 1);
+			float nz = normals->GetComponent(i, 2);
+// 			m_normals << QVector3D(nx, ny, nz);
+			m_normals << QVector3D(0, 0, 0);
+		}
+
+// 		qDebug() << m_vertices;
+		
+	}
+
+// 	normals->SetInputData(tube-());
 
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();
@@ -137,5 +187,15 @@ int main(int, char *[])
 
 	iren->Start();
 
-	return EXIT_SUCCESS;
+	QApplication a(argc, argv);
+
+	QMainWindow w;
+
+	GLWidget *gw = new GLWidget(m_vertices, m_normals);
+
+	w.setCentralWidget(gw);
+	w.resize(600, 500);
+	w.show();
+
+	return a.exec();
 }

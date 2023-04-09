@@ -32,9 +32,6 @@
     <ClCompile Include="..\gui\dialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\gui\mainwindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\utils\display\shower.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\utils\observer\vtkPointPickCallback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\glwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -87,15 +87,12 @@
     <QtMoc Include="..\gui\dialog.h">
       <Filter>Source Files</Filter>
     </QtMoc>
-    <QtMoc Include="..\gui\mainwindow.h">
-      <Filter>Source Files</Filter>
+    <QtMoc Include="..\glwidget.h">
+      <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\gui\dialog.ui">
-      <Filter>Source Files</Filter>
-    </QtUic>
-    <QtUic Include="..\gui\mainwindow.ui">
       <Filter>Source Files</Filter>
     </QtUic>
   </ItemGroup>
