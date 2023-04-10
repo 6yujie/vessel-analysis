@@ -18,6 +18,8 @@
 #include <vtkTubeFilter.h>
 
 #include <vtkPolyDataNormals.h>
+#include <vtkImageData.h>
+#include <vtkPNGWriter.h>
 
 #include <vtkDataSetMapper.h>
 #include <vtkPolyDataMapper.h>
@@ -28,6 +30,11 @@
 #include <vtkCamera.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 
+#include <vtkWindowToImageFilter.h>
+#include <vtkUnsignedCharArray.h>
+
+#include <QVTKOpenGLWidget.h>
+
 #include <vtkMath.h>
 
 #include <QApplication>
@@ -36,6 +43,7 @@
 #include <QVector3D>
 #include <QVector>
 #include <QDebug>
+#include <QImage>
 
 #include "glwidget.h"
 
@@ -179,17 +187,60 @@ int main(int argc, char **argv)
 	iren->SetRenderWindow(renWin);
 	renWin->AddRenderer(renderer);
 	renWin->SetSize(500, 500);
+// 	renWin->OffScreenRenderingOn();
 	renWin->Render();
 
 	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style =
 		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
 	iren->SetInteractorStyle(style);
 
+	vtkWindowToImageFilter *w2i = vtkWindowToImageFilter::New();
+	renWin->SwapBuffersOff();
+	w2i->SetInput(renWin);
+	w2i->ReadFrontBufferOff();
+	w2i->Update();
+
+// 	vtkPNGWriter *imgWriter = vtkPNGWriter::New();
+// 	imgWriter->SetInputConnection(w2i->GetOutputPort());
+// 	imgWriter->WriteToMemoryOn();
+
 	iren->Start();
+// 
+// 	imgWriter->Update();
+// 	imgWriter->Write();
+// 	vtkUnsignedCharArray* result = imgWriter->GetResult();
+
+#if 1
+	vtkImageData* img = w2i->GetOutput();
+	int dims[3];
+	img->GetDimensions(dims);
+	vtkUnsignedCharArray* result = vtkUnsignedCharArray::SafeDownCast(img->GetPointData()->GetScalars());
+// 	vtkDataArray* vtk_array = img->GetPointData()->GetScalars();
+
+	QImage qImg(dims[0], dims[1], QImage::Format_ARGB32);
+	vtkIdType tupleIndex = 0;
+	int qImageBitIndex = 0;
+	QRgb *qImageBits = (QRgb*)qImg.bits();
+	unsigned char* scalarTuples = result->GetPointer(0);
+
+	for (int j = 0; j < dims[1]; j++)
+	{
+		for (int i = 0; i < dims[0]; i++)
+		{
+			unsigned char *tuple = scalarTuples + (tupleIndex++ * 3);
+			QRgb color = qRgba(tuple[0], tuple[1], tuple[2], 255);
+			*(qImageBits + (qImageBitIndex++)) = color;
+		}
+	}
+
+	qImg.save("myImage.jpg");
+#endif
+
 
 	QApplication a(argc, argv);
 
 	QMainWindow w;
+
 
 	GLWidget *gw = new GLWidget(m_vertices, m_normals);
 
