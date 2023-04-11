@@ -126,8 +126,9 @@ void GLWidget::paintQtLogo()
     m_program1->setAttributeBuffer(m_normalAttr1, GL_FLOAT, 3 * sizeof(GLfloat), 3, 6 * sizeof(GLfloat));
     m_vbo1.release();
 
-//     glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
-	glDrawArrays(GL_POINTS, 0, m_vertices.size());
+    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
+// 	glDrawArrays(GL_POINTS, 0, m_vertices.size());
+// 	glDrawArrays(GL_POINTS, 0, 400);
 
     m_program1->disableAttributeArray(m_normalAttr1);
     m_program1->disableAttributeArray(m_vertexAttr1);
@@ -378,7 +379,7 @@ void GLWidget::paintGL()
         m_time.start();
         m_frames = 0;
     }
-    m_fAngle += 1.0f;
+    m_fAngle += 0.5f;
     ++m_frames;
 
 	update();

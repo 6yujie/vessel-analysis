@@ -17,6 +17,9 @@
 #include <vtkSmartPointer.h>
 #include <vtkTubeFilter.h>
 
+#include <vtkTriangleStrip.h>
+#include <vtkTriangle.h>
+
 #include <vtkPolyDataNormals.h>
 #include <vtkImageData.h>
 #include <vtkPNGWriter.h>
@@ -135,6 +138,45 @@ int main(int argc, char **argv)
 	vtkPolyData* tbData = tube->GetOutput();
 
 	vtkPoints *tbPoints = tbData->GetPoints();
+	vtkCellArray *tbPolys = tbData->GetPolys();
+	vtkCellArray *tbStrips = tbData->GetStrips();
+
+	qDebug() << "points: " << tbPoints->GetNumberOfPoints(); // 400
+	qDebug() << "polys: " << tbPolys->GetNumberOfCells(); // 0
+	qDebug() << "strips: " << tbStrips->GetNumberOfCells(); // 8
+
+	vtkIdType npts = 0;
+	vtkIdType *indx = nullptr;
+	vtkCellArray *tbPolyStrips = vtkCellArray::New();
+	if (tbStrips->GetNumberOfCells() > 0)
+	{
+		vtkIdType *ptIds = nullptr;
+		for (tbStrips->InitTraversal(); tbStrips->GetNextCell(npts, ptIds);)
+		{
+			vtkTriangleStrip::DecomposeStrip(npts, ptIds, tbPolyStrips);
+		}
+	}
+
+	QVector<QVector3D> m_vertices;
+	QVector<QVector3D> m_normals;
+
+	double n[3], v1[3], v2[3], v3[3];
+	for (tbPolyStrips->InitTraversal(); tbPolyStrips->GetNextCell(npts, indx);)
+	{
+		tbPoints->GetPoint(indx[0], v1);
+		tbPoints->GetPoint(indx[1], v2);
+		tbPoints->GetPoint(indx[2], v3);
+
+		vtkTriangle::ComputeNormal(tbPoints, npts, indx, n);
+		m_vertices << QVector3D(v1[0], v1[1], v1[2]);
+		m_vertices << QVector3D(v2[0], v2[1], v2[2]);
+		m_vertices << QVector3D(v3[0], v3[1], v3[2]);
+		m_normals << QVector3D(n[0], n[1], n[2]);
+		m_normals << QVector3D(n[0], n[1], n[2]);
+		m_normals << QVector3D(n[0], n[1], n[2]);
+	}
+
+#if 0
 	vtkDataArray* vertexes = tbPoints->GetData();
 	vtkDataArray* normals = tbData->GetPointData()->GetNormals();
 
@@ -155,13 +197,14 @@ int main(int argc, char **argv)
 			float nx = normals->GetComponent(i, 0);
 			float ny = normals->GetComponent(i, 1);
 			float nz = normals->GetComponent(i, 2);
-// 			m_normals << QVector3D(nx, ny, nz);
-			m_normals << QVector3D(0, 0, 0);
+			m_normals << QVector3D(nx, ny, nz);
+// 			m_normals << QVector3D(0, 0, 0);
 		}
 
 // 		qDebug() << m_vertices;
 		
 	}
+#endif
 
 // 	normals->SetInputData(tube-());
 
@@ -197,6 +240,7 @@ int main(int argc, char **argv)
 	vtkWindowToImageFilter *w2i = vtkWindowToImageFilter::New();
 	renWin->SwapBuffersOff();
 	w2i->SetInput(renWin);
+// 	w2i->SetScale(2);
 	w2i->ReadFrontBufferOff();
 	w2i->Update();
 
@@ -210,7 +254,7 @@ int main(int argc, char **argv)
 // 	imgWriter->Write();
 // 	vtkUnsignedCharArray* result = imgWriter->GetResult();
 
-#if 1
+#if 0
 	vtkImageData* img = w2i->GetOutput();
 	int dims[3];
 	img->GetDimensions(dims);
@@ -233,7 +277,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	qImg.save("myImage.jpg");
+// 	qImg.save("myImage.jpg");
 #endif
 
 
